@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - A Bank</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <h1><a href="index.html">A Bank</a></h1>
+            <nav>
+                <ul>
+                    <li><a href="dashboard.html">Dashboard</a></li>
+                    <li><a href="transactions.html">Transactions</a></li>
+                    <li><a href="transfer.html">Transfer</a></li>
+                    <li><a href="index.html">Logout</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    <main class="container">
+        <h2>Welcome, Azhagappan</h2>
+
+        <div class="banking-card">
+            <h3>Account Summary</h3>
+            <div class="account-info">
+                <div class="info-item">
+                    <span class="label">Account Number:</span>
+                    <span class="value">XXXX-XXXX-6789</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Account Type:</span>
+                    <span class="value">Savings Account</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Mobile:</span>
+                    <span class="value">+91 98765-43210</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="banking-card">
+            <h3>Current Balance</h3>
+            <div class="balance-display">₹<span class="balance-amount" id="balance">1,00,000.00</span></div>
+            <div class="quick-actions">
+                <a href="transfer.html" class="btn">Transfer Money</a>
+                <a href="transactions.html" class="btn btn-secondary">View All Transactions</a>
+            </div>
+        </div>
+
+        <div class="banking-card">
+            <h3>Quick Summary</h3>
+            <div class="quick-stats">
+                <div class="stat-item">
+                    <div class="stat-label">This Month</div>
+                    <div class="stat-value credit">+₹25,000</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Spent</div>
+                    <div class="stat-value debit">-₹15,500</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Transactions</div>
+                    <div class="stat-value">18</div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 A Bank. All rights reserved.</p>
+        </div>
+    </footer>
+    <script src="script.js"></script>
+</body>
+
+</html>
