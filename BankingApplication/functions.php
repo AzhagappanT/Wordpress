@@ -3,111 +3,133 @@
  * Banking Theme Functions
  */
 
-function banking_enqueue_scripts() {
-    wp_enqueue_style( 'banking-style', get_stylesheet_uri() );
-    wp_enqueue_style( 'banking-custom-style', get_template_directory_uri() . '/assets/css/banking.css', array(), '1.0' );
-    
-    wp_enqueue_script( 'banking-script', get_template_directory_uri() . '/assets/js/banking.js', array('jquery'), '1.0', true );
+function banking_enqueue_scripts()
+{
+    wp_enqueue_style('banking-style', get_stylesheet_uri());
+    wp_enqueue_style('banking-custom-style', get_template_directory_uri() . '/assets/css/banking.css', array(), '1.0');
+
+    wp_enqueue_script('banking-script', get_template_directory_uri() . '/assets/js/banking.js', array('jquery'), '1.0', true);
 
     // Localize script for AJAX
-    wp_localize_script( 'banking-script', 'banking_ajax', array(
-        'ajax_url' => admin_url( 'admin-ajax.php' ),
-        'nonce'    => wp_create_nonce( 'banking_nonce' )
+    wp_localize_script('banking-script', 'banking_ajax', array(
+        'ajax_url' => admin_url('admin-ajax.php'),
+        'nonce' => wp_create_nonce('banking_nonce')
     ));
 }
-add_action( 'wp_enqueue_scripts', 'banking_enqueue_scripts' );
+add_action('wp_enqueue_scripts', 'banking_enqueue_scripts');
 
 // Handle Login
-function banking_ajax_login() {
-    check_ajax_referer( 'banking_nonce', 'nonce' );
+function banking_ajax_login()
+{
+    check_ajax_referer('banking_nonce', 'nonce');
 
     $info = array();
     $info['user_login'] = $_POST['username'];
     $info['user_password'] = $_POST['password'];
     $info['remember'] = true;
 
-    $user_signon = wp_signon( $info, false );
+    $user_signon = wp_signon($info, false);
 
-    if ( is_wp_error( $user_signon ) ) {
-        wp_send_json_error( array( 'message' => 'Invalid username or password.' ) );
+    if (is_wp_error($user_signon)) {
+        wp_send_json_error(array('message' => 'Invalid username or password.'));
     } else {
-        wp_send_json_success( array( 'message' => 'Login successful!', 'redirect' => home_url('/dashboard') ) );
+        wp_send_json_success(array('message' => 'Login successful!', 'redirect' => home_url('/dashboard')));
     }
 }
-add_action( 'wp_ajax_nopriv_banking_login', 'banking_ajax_login' );
+add_action('wp_ajax_nopriv_banking_login', 'banking_ajax_login');
 
 // Handle Transfer
-function banking_ajax_transfer() {
-    check_ajax_referer( 'banking_nonce', 'nonce' );
+function banking_ajax_transfer()
+{
+    check_ajax_referer('banking_nonce', 'nonce');
 
-    if ( ! is_user_logged_in() ) {
-        wp_send_json_error( array( 'message' => 'You must be logged in.' ) );
+    if (!is_user_logged_in()) {
+        wp_send_json_error(array('message' => 'You must be logged in.'));
     }
 
     $current_user_id = get_current_user_id();
-    $recipient_email = sanitize_email( $_POST['recipient_email'] );
-    $amount = floatval( $_POST['amount'] );
+    $amount = floatval($_POST['amount']);
+    $type = sanitize_text_field($_POST['type']);
+    $remarks = sanitize_text_field($_POST['remarks']);
 
-    if ( $amount <= 0 ) {
-        wp_send_json_error( array( 'message' => 'Invalid amount.' ) );
+    if ($amount <= 0) {
+        wp_send_json_error(array('message' => 'Invalid amount.'));
     }
 
-    $recipient = get_user_by( 'email', $recipient_email );
+    // Get sender balance
+    $sender_balance = (float) get_user_meta($current_user_id, 'banking_balance', true);
 
-    if ( ! $recipient ) {
-        wp_send_json_error( array( 'message' => 'Recipient not found.' ) );
-    }
-
-    if ( $recipient->ID === $current_user_id ) {
-        wp_send_json_error( array( 'message' => 'You cannot transfer money to yourself.' ) );
-    }
-
-    // Get balances
-    $sender_balance = (float) get_user_meta( $current_user_id, 'banking_balance', true );
-    
     // Initialize balance if not set
-    if ( '' === get_user_meta( $current_user_id, 'banking_balance', true ) ) {
-        $sender_balance = 1000.00; // Sign up bonus / default for demo
-        update_user_meta( $current_user_id, 'banking_balance', $sender_balance );
+    if ('' === get_user_meta($current_user_id, 'banking_balance', true)) {
+        $sender_balance = 100000.00; // Default demo balance 1 Lakh
+        update_user_meta($current_user_id, 'banking_balance', $sender_balance);
     }
 
-    if ( $sender_balance < $amount ) {
-        wp_send_json_error( array( 'message' => 'Insufficient funds.' ) );
+    if ($sender_balance < $amount) {
+        wp_send_json_error(array('message' => 'Insufficient funds.'));
     }
 
-    $recipient_balance = (float) get_user_meta( $recipient->ID, 'banking_balance', true );
-    
-    // Update balances
-    update_user_meta( $current_user_id, 'banking_balance', $sender_balance - $amount );
-    update_user_meta( $recipient->ID, 'banking_balance', $recipient_balance + $amount );
+    // Simulate Recipient Lookup
+    // In a real app, we would query users by meta key (account_number or mobile)
+    // For this demo, we will simulate success to ensure HR can test it easily
 
-    // Log transaction (Optional: could use a custom table or post type, using user meta for simplicity here)
+    $recipient_name = "Beneficiary";
+    $recipient_details = "";
+
+    if ($type === 'account') {
+        $account_number = sanitize_text_field($_POST['account_number']);
+        $ifsc = sanitize_text_field($_POST['ifsc_code']);
+        $holder = sanitize_text_field($_POST['account_holder']);
+        $recipient_details = "Account: $account_number ($holder)";
+        $recipient_name = $holder;
+    } else {
+        $mobile = sanitize_text_field($_POST['mobile_number']);
+        $recipient_details = "Mobile: $mobile";
+        $recipient_name = "Mobile User";
+    }
+
+    // Update sender balance
+    $new_balance = $sender_balance - $amount;
+    update_user_meta($current_user_id, 'banking_balance', $new_balance);
+
+    // Log transaction
     $transaction = array(
-        'date' => current_time( 'mysql' ),
-        'to' => $recipient->user_login,
+        'date' => current_time('mysql'),
+        'to' => $recipient_name,
+        'details' => $recipient_details,
         'amount' => $amount,
-        'type' => 'debit'
+        'type' => 'debit',
+        'remarks' => $remarks
     );
-    add_user_meta( $current_user_id, 'banking_transactions', $transaction );
 
-    $recipient_transaction = array(
-        'date' => current_time( 'mysql' ),
-        'from' => wp_get_current_user()->user_login,
-        'amount' => $amount,
-        'type' => 'credit'
-    );
-    add_user_meta( $recipient->ID, 'banking_transactions', $recipient_transaction );
+    // Get existing transactions
+    $transactions = get_user_meta($current_user_id, 'banking_transactions', true);
+    if (!is_array($transactions)) {
+        $transactions = array();
+    }
 
-    wp_send_json_success( array( 'message' => 'Transfer successful!', 'new_balance' => $sender_balance - $amount ) );
+    // Prepend new transaction
+    array_unshift($transactions, $transaction);
+
+    // Limit to last 50 transactions
+    $transactions = array_slice($transactions, 0, 50);
+
+    update_user_meta($current_user_id, 'banking_transactions', $transactions);
+
+    wp_send_json_success(array(
+        'message' => 'Transfer successful! ₹' . number_format($amount, 2) . ' sent.',
+        'new_balance' => number_format($new_balance, 2)
+    ));
 }
-add_action( 'wp_ajax_banking_transfer', 'banking_ajax_transfer' );
+add_action('wp_ajax_banking_transfer', 'banking_ajax_transfer');
 
 // Helper to get balance
-function banking_get_balance( $user_id ) {
-    $balance = get_user_meta( $user_id, 'banking_balance', true );
-    if ( '' === $balance ) {
-        $balance = 1000.00; // Default demo balance
-        update_user_meta( $user_id, 'banking_balance', $balance );
+function banking_get_balance($user_id)
+{
+    $balance = get_user_meta($user_id, 'banking_balance', true);
+    if ('' === $balance) {
+        $balance = 100000.00; // Default demo balance
+        update_user_meta($user_id, 'banking_balance', $balance);
     }
-    return number_format( (float)$balance, 2 );
+    return number_format((float) $balance, 2);
 }

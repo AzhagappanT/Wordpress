@@ -10,7 +10,11 @@ if (!is_user_logged_in()) {
 
 $current_user = wp_get_current_user();
 $balance = banking_get_balance($current_user->ID);
-$transactions = get_user_meta($current_user->ID, 'banking_transactions', false); // false returns array of all values
+$transactions = get_user_meta($current_user->ID, 'banking_transactions', true);
+
+if (!is_array($transactions)) {
+    $transactions = array();
+}
 
 get_header(); ?>
 
@@ -18,41 +22,53 @@ get_header(); ?>
     <h2>Welcome, <?php echo esc_html($current_user->display_name); ?></h2>
 
     <div class="banking-card">
+        <h3>Account Summary</h3>
+        <div class="account-info">
+            <div class="info-item">
+                <span class="label">Account Number:</span>
+                <span class="value">XXXX-XXXX-<?php echo rand(1000, 9999); ?></span>
+            </div>
+            <div class="info-item">
+                <span class="label">Account Type:</span>
+                <span class="value">Savings Account</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Email:</span>
+                <span class="value"><?php echo esc_html($current_user->user_email); ?></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="banking-card">
         <h3>Current Balance</h3>
-        <div class="balance-display">$<span class="balance-amount"><?php echo esc_html($balance); ?></span></div>
-        <div style="text-align: center;">
+        <div class="balance-display">₹<span class="balance-amount"><?php echo esc_html($balance); ?></span></div>
+        <div class="quick-actions">
             <a href="<?php echo home_url('/transfer'); ?>" class="btn">Transfer Money</a>
         </div>
     </div>
 
     <div class="banking-card">
         <h3>Recent Transactions</h3>
-        <?php if (empty($transactions)): ?>
-            <p>No transactions found.</p>
-        <?php else: ?>
-            <ul class="transaction-list">
-                <?php
-                // Show last 5 transactions, reversed
-                $transactions = array_reverse($transactions);
-                $transactions = array_slice($transactions, 0, 5);
-
-                foreach ($transactions as $t):
-                    $class = ($t['type'] === 'credit') ? 'credit' : 'debit';
-                    $sign = ($t['type'] === 'credit') ? '+' : '-';
-                    ?>
-                    <li class="transaction-item <?php echo $class; ?>">
+        <ul class="transaction-list">
+            <?php if (empty($transactions)): ?>
+                <li>No transactions found.</li>
+            <?php else: ?>
+                <?php foreach (array_slice($transactions, 0, 5) as $transaction): ?>
+                    <li class="transaction-item <?php echo esc_attr($transaction['type']); ?>">
                         <div>
-                            <strong><?php echo ($t['type'] === 'credit') ? 'Received from ' . esc_html($t['from']) : 'Sent to ' . esc_html($t['to']); ?></strong>
-                            <br>
-                            <small><?php echo date('M j, Y g:i a', strtotime($t['date'])); ?></small>
+                            <strong><?php echo esc_html($transaction['type'] === 'credit' ? 'Received from ' . $transaction['from'] : 'Sent to ' . $transaction['to']); ?></strong><br>
+                            <small><?php echo esc_html($transaction['date']); ?></small>
+                            <?php if (!empty($transaction['remarks'])): ?>
+                                <br><small><em><?php echo esc_html($transaction['remarks']); ?></em></small>
+                            <?php endif; ?>
                         </div>
                         <div style="font-weight: bold;">
-                            <?php echo $sign; ?>$<?php echo number_format($t['amount'], 2); ?>
+                            <?php echo $transaction['type'] === 'credit' ? '+' : '-'; ?>₹<?php echo number_format((float) $transaction['amount'], 2); ?>
                         </div>
                     </li>
                 <?php endforeach; ?>
-            </ul>
-        <?php endif; ?>
+            <?php endif; ?>
+        </ul>
     </div>
 </div>
 
