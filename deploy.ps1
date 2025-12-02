@@ -1,12 +1,21 @@
-$source = "$PSScriptRoot\BankingTheme"
-Write-Host "This script will deploy the BankingTheme and set up your site automatically."
-Write-Host "1. Ensure your Local site is RUNNING."
-Write-Host "2. Right-click your site in Local -> 'Go to Site Folder'."
-Write-Host "3. Navigate to 'app' -> 'public'."
-Write-Host "4. Copy that path and paste it below."
-Write-Host ""
+param (
+    [string]$Path
+)
 
-$publicDir = Read-Host "Paste the 'public' folder path here"
+$source = "$PSScriptRoot\BankingApplication"
+Write-Host "This script will deploy the BankingApplication and set up your site automatically."
+
+if ([string]::IsNullOrWhiteSpace($Path)) {
+    Write-Host "1. Ensure your Local site is RUNNING."
+    Write-Host "2. Right-click your site in Local -> 'Go to Site Folder'."
+    Write-Host "3. Navigate to 'app' -> 'public'."
+    Write-Host "4. Copy that path and paste it below."
+    Write-Host ""
+    $publicDir = Read-Host "Paste the 'public' folder path here"
+}
+else {
+    $publicDir = $Path
+}
 
 if ([string]::IsNullOrWhiteSpace($publicDir)) {
     Write-Host "No path provided. Exiting." -ForegroundColor Yellow
@@ -18,7 +27,7 @@ if (-not (Test-Path $publicDir)) {
     exit
 }
 
-$themeDir = Join-Path -Path $publicDir -ChildPath "wp-content\themes\BankingTheme"
+$themeDir = Join-Path -Path $publicDir -ChildPath "wp-content\themes\BankingApplication"
 $muPluginsDir = Join-Path -Path $publicDir -ChildPath "wp-content\mu-plugins"
 
 # 1. Deploy Theme
@@ -46,8 +55,8 @@ $setupCode = @"
 
 add_action('init', function() {
     // 1. Activate Theme
-    if (get_option('stylesheet') !== 'BankingTheme') {
-        switch_theme('BankingTheme');
+    if (get_option('stylesheet') !== 'BankingApplication') {
+        switch_theme('BankingApplication');
     }
 
     // 2. Create Pages
