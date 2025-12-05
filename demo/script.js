@@ -235,3 +235,12 @@ function setupTransferForm(formId, recipientField) {
 setupTransferForm('transfer-account-form', 'account_holder_name');
 setupTransferForm('transfer-mobile-form', 'mobile_number');
 
+
+// Premium UI Enhancements (Vanilla JS)
+document.addEventListener('DOMContentLoaded', function () {
+    const cards = document.querySelectorAll('.banking-card');
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', () => card.classList.add('hovered'));
+        card.addEventListener('mouseleave', () => card.classList.remove('hovered'));
+    });
+});

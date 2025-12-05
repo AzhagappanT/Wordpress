@@ -9,6 +9,7 @@ function banking_enqueue_scripts()
     wp_enqueue_style('banking-custom-style', get_template_directory_uri() . '/assets/css/banking.css', array(), '1.0');
 
     wp_enqueue_script('banking-script', get_template_directory_uri() . '/assets/js/banking.js', array('jquery'), '1.0', true);
+    wp_enqueue_script('banking-dashboard', get_template_directory_uri() . '/assets/js/dashboard.js', array('jquery'), '1.0', true);
 
     // Localize script for AJAX
     wp_localize_script('banking-script', 'banking_ajax', array(
@@ -133,3 +134,13 @@ function banking_get_balance($user_id)
     }
     return number_format((float) $balance, 2);
 }
+
+// Dashboard shortcode
+function banking_dashboard_shortcode()
+{
+    ob_start();
+    // Load the dashboard template
+    include locate_template('page-templates/page-dashboard.php');
+    return ob_get_clean();
+}
+add_shortcode('banking_dashboard', 'banking_dashboard_shortcode');
